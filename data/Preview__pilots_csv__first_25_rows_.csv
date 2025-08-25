@@ -1,0 +1,26 @@
+pilot_id,age,gender,rank,base,aircraft,flight_hours_total,flight_hours_last_12mo,aeromedical_class_current,dental_readiness,pha_last_date,pha_status
+P0001,26,Male,O-2,Hill AFB,F-16,1611,212,Class I,1,2025-02-05,Complete
+P0002,41,Male,O-3,Joint Base Elmendorf-Richardson,F-16,3450,237,Class I,1,2025-07-12,Complete
+P0003,38,Male,O-2,Nellis AFB,F-16,623,256,Class I,1,2025-03-22,Complete
+P0004,34,Male,O-3,Luke AFB,C-17,2062,292,Class II,1,2025-04-23,Complete
+P0005,34,Male,O-4,Hill AFB,F-16,3304,325,Class I,1,2024-07-20,Overdue
+P0006,43,Male,O-2,Misawa AB,T-38,3836,229,Class I,2,2025-07-27,Complete
+P0007,26,Male,O-3,Misawa AB,HH-60,1380,218,Class II,3,2025-01-25,Complete
+P0008,39,Male,O-5,Misawa AB,HH-60,2778,280,Class III,1,2024-07-26,Overdue
+P0009,29,Male,O-1,Hill AFB,KC-135,1164,292,Class I,3,2024-07-05,Overdue
+P0010,26,Male,O-3,Nellis AFB,A-10,905,219,Class II,1,2024-12-12,Complete
+P0011,36,Male,O-4,RAF Lakenheath,F-16,1735,305,Class II,1,2025-05-06,Complete
+P0012,45,Male,O-2,Joint Base San Antonio,F-35,3598,318,Class I,1,2025-03-10,Complete
+P0013,40,Male,O-1,Langley AFB,F-35,2913,340,Class II,1,2025-05-06,Complete
+P0014,40,Male,O-2,Langley AFB,A-10,2212,374,Class I,2,2024-09-28,Complete
+P0015,40,Female,O-5,Luke AFB,KC-135,1490,189,Class I,1,2025-04-01,Complete
+P0016,41,Male,O-1,RAF Lakenheath,HH-60,995,250,Class I,1,2024-10-14,Complete
+P0017,35,Male,O-2,Langley AFB,F-16,1447,250,Class I,1,2024-10-02,Complete
+P0018,27,Male,O-1,RAF Lakenheath,A-10,1034,243,Class I,1,2024-05-13,Overdue
+P0019,42,Male,O-1,Joint Base Elmendorf-Richardson,KC-135,1154,204,Class I,1,2025-02-21,Complete
+P0020,34,Male,O-4,RAF Lakenheath,KC-135,2907,146,Class I,1,2024-05-02,Overdue
+P0021,35,Male,O-2,Misawa AB,A-10,964,256,Class I,1,2025-02-06,Complete
+P0022,32,Male,O-3,Nellis AFB,F-35,665,196,Class I,1,2024-09-19,Complete
+P0023,28,Male,O-3,Misawa AB,F-35,2398,256,Class I,1,2024-09-29,Complete
+P0024,44,Male,O-5,Langley AFB,KC-135,1503,194,Class I,1,2024-07-13,Overdue
+P0025,41,Male,O-1,Luke AFB,F-16,2091,173,Class I,1,2025-01-03,Complete
