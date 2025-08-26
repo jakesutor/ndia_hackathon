@@ -32,7 +32,16 @@ from sklearn.model_selection import train_test_split
 import itertools
 from pyspark.ml.functions import vector_to_array
 from pyspark.sql.types import StructType, DoubleType, ArrayType, StringType, DateType, Row 
-from pyspark.ml.feature import OneHotEncoder, StringIndexer, StandardScaler, VectorAssembler, StringIndexerModel, CountVectorizerModel
+#from pyspark.ml.feature import OneHotEncoder, StringIndexer, StandardScaler, VectorAssembler, StringIndexerModel, CountVectorizerModel
+from pyspark.ml.feature import (
+    VectorAssembler,
+    StandardScaler,
+    StringIndexer,
+    OneHotEncoder,
+    CountVectorizer,
+    StringIndexerModel, 
+    CountVectorizerModel
+)
 from pyspark.ml import Pipeline, PipelineModel
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.metrics import precision_recall_curve
@@ -80,6 +89,7 @@ def select_features_to_scale(df, lower_skew=-2,upper_skew=2, continuous_cols=[],
 
 
 def feature_engineering(data: DataFrame, cat_features : list, num_features: list,count_vec_features : list ):
+#def feature_engineering(data: DataFrame, cat_features : list, num_features: list ):
     """Contains scaler, feature vectorizer, one hot encoding. Creates a pipeline for reproducibility"""
     column_names = []
     stages = []
@@ -88,7 +98,7 @@ def feature_engineering(data: DataFrame, cat_features : list, num_features: list
     features_to_scale = select_features_to_scale(df=data,continuous_cols=num_features, drop_cols=[''] )
     print(f'>>> scaling: {features_to_scale}')
 
-    unscaled_assembler = VectorAssembler(inputCols= features_to_scale, outputCol='to_scale_vec')
+    unscaled_assembler = VectorAssembler(inputCols=features_to_scale, outputCol='to_scale_vec')
     scaler = StandardScaler(inputCol='to_scale_vec',outputCol='scaled_features')
     stages += [unscaled_assembler, scaler]
 

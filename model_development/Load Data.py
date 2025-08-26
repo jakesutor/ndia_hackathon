@@ -1,21 +1,22 @@
 # Databricks notebook source
-import requests
+# MAGIC %pip install openpyxl
+
+# COMMAND ----------
+
 import pandas as pd
-from io import BytesIO
 
-url = "https://github.com/AED-KM/ndia_hackathon/raw/main/data/usaf_pilots_synthetic.xlsx"
-response = requests.get(url)
+file_path = "/Workspace/Users/nundale@kpmg.com/Avengers/ndia_hackathon/data/usaf_pilots_synthetic.xlsx"
 
-aeromedical_class_history = pd.read_excel(BytesIO(response.content), sheet_name="aeromedical_class_history")
-encounters = pd.read_excel(BytesIO(response.content), sheet_name="encounters")
-hospitalizations = pd.read_excel(BytesIO(response.content), sheet_name="hospitalizations")
-immunizations = pd.read_excel(BytesIO(response.content), sheet_name="immunizations")
-labs = pd.read_excel(BytesIO(response.content), sheet_name="labs")
-mental_health = pd.read_excel(BytesIO(response.content), sheet_name="mental_health")
-pilots = pd.read_excel(BytesIO(response.content), sheet_name="pilots")
-predictive_labels_monthly = pd.read_excel(BytesIO(response.content), sheet_name="predictive_labels_monthly")
-profiles = pd.read_excel(BytesIO(response.content), sheet_name="profiles")
-readiness_kpis_monthly = pd.read_excel(BytesIO(response.content), sheet_name="readiness_kpis_monthly")
+aeromedical_class_history = pd.read_excel(file_path, sheet_name="aeromedical_class_history")
+encounters = pd.read_excel(file_path, sheet_name="encounters")
+hospitalizations = pd.read_excel(file_path, sheet_name="hospitalizations")
+immunizations = pd.read_excel(file_path, sheet_name="immunizations")
+labs = pd.read_excel(file_path, sheet_name="labs")
+mental_health = pd.read_excel(file_path, sheet_name="mental_health")
+pilots = pd.read_excel(file_path, sheet_name="pilots")
+predictive_labels_monthly = pd.read_excel(file_path, sheet_name="predictive_labels_monthly")
+profiles = pd.read_excel(file_path, sheet_name="profiles")
+readiness_kpis_monthly = pd.read_excel(file_path, sheet_name="readiness_kpis_monthly")
 
 # COMMAND ----------
 
@@ -115,9 +116,7 @@ full_joined_df = joined_df.join(hospitalizations_df, on=matching_columns, how="f
 
 full_joined_df.display()
 
-
-
 # COMMAND ----------
 
 # Write merged_df to a Delta table
-full_joined_df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable("fmddt_catalog.gao.all_pilots_data")
+full_joined_df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable("avengers.default.all_pilots_data")

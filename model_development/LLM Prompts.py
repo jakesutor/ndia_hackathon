@@ -3,7 +3,12 @@
 
 # COMMAND ----------
 
+# MAGIC %pip install --upgrade typing_extensions
+
+# COMMAND ----------
+
 # Set up connection
+from typing import List
 from openai import OpenAI
 from pyspark.sql.functions import col
 
@@ -11,7 +16,7 @@ DATABRICKS_TOKEN = dbutils.notebook.entry_point.getDbutils().notebook().getConte
 
 client = OpenAI(
     api_key=DATABRICKS_TOKEN,
-    base_url="https://adb-2715096318135708.8.azuredatabricks.net/serving-endpoints"
+    base_url="https://dbc-7e282311-5ce7.cloud.databricks.com/serving-endpoints"
 )
 
 # COMMAND ----------

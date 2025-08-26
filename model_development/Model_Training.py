@@ -24,19 +24,43 @@ from pyspark.ml.evaluation import BinaryClassificationEvaluator, MulticlassClass
 from pyspark.mllib.evaluation import MulticlassMetrics
 from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
 
-try:
-  import mlflow
-  import mlflow.spark as mlflow_sklearn
-except:
-  !pip install mlflow
-  import mlflow
-  import mlflow.spark as mlflow_sklearn
+import pandas as pd
+import numpy as np
+import random 
+from pyspark.sql.functions import kurtosis
+import sys
+import json
+import os
+from datetime import date
 
-spark.conf.set("spark.databricks.io.cache.enabled","true")
-spark.conf.set("spark.databricks.delta.checkLatestSchemaOnRead", "false")
-spark.conf.set('spark.sql.shuffle.partitions', 'auto')  
-import warnings
-warnings.filterwarnings('ignore')
+from pyspark.sql.functions import *
+from pyspark.sql import Window, DataFrame
+from pyspark.sql.functions import regexp_replace
+from pyspark.sql.types import StructType
+
+from pyspark.ml.classification import GBTClassifier, LogisticRegression,RandomForestClassifier
+
+from pyspark.sql.functions import col
+from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler, VectorIndexer
+from pyspark.ml import Pipeline, PipelineModel
+
+from pyspark.ml.evaluation import BinaryClassificationEvaluator, MulticlassClassificationEvaluator
+from pyspark.mllib.evaluation import MulticlassMetrics
+from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
+
+#try:
+#  import mlflow
+#  import mlflow.spark as mlflow_sklearn
+#except:
+#  !pip install mlflow
+#  import mlflow
+#  import mlflow.spark as mlflow_sklearn
+
+#spark.conf.set("spark.databricks.io.cache.enabled","true")
+#spark.conf.set("spark.databricks.delta.checkLatestSchemaOnRead", "false")
+#spark.conf.set('spark.sql.shuffle.partitions', 'auto')  
+#import warnings
+#warnings.filterwarnings('ignore')
 
 
 # COMMAND ----------
@@ -101,8 +125,8 @@ class Train_Model():
                target: str = "profile_next_90d",
                columns_to_exclude_from_feature_set: list = ['pilot_id', 'year_month'],
                model_name: str = 'flight_risk_classification_model',
-               champion_model_performance_metrics_path: str = r"fmddt_catalog.gao.predictive_labels_monthly_model_champion_metrics_v1",
-               model_performance_metrics_path: str = r"fmddt_catalog.gao.predictive_labels_monthly_model_metrics_V1",
+               champion_model_performance_metrics_path: str = r"avengers.default.predictive_labels_monthly_model_champion_metrics_v1",
+               model_performance_metrics_path: str = r"avengers.default.predictive_labels_monthly_model_metrics_V1",
                repartition_number: int = 512):
     self.cat_features = ['gender','aircraft','aeromedical_class_current','dental_readiness','pha_status']
 
@@ -128,7 +152,7 @@ class Train_Model():
     
     self.model_path = F"dbfs:/FileStore/models/{model_name}_{self.training_date_file_name}"
     
-    self.bso_info = "fmddt_catalog.gao.all_pilots_data"#"fmddt_catalog.gao.predictive_labels_monthly"
+    self.bso_info = "avengers.default.all_pilots_data"#"fmddt_catalog.gao.predictive_labels_monthly"
    # self.bso_info_index = self.bso_info.index
     
    # self.bso_info.reset_index(drop = True, inplace = True)
@@ -190,8 +214,8 @@ class Train_Model():
     self.training_data_zeros = self.training_data.filter(col(self.target)== 0)
     train_ids_ones, test_ids_ones = self.training_data_ones.randomSplit([self.maximum_train_size,self.maximum_test_size],seed=123)
     train_ids_zeros, test_ids_zeros = self.training_data_zeros.randomSplit([self.maximum_train_size,self.maximum_test_size],seed=123)
-    self.train = train_ids_ones.union(train_ids_zeros).cache()
-    self.test = test_ids_zeros.union(test_ids_ones).cache()
+    self.train = train_ids_ones.union(train_ids_zeros)
+    self.test = test_ids_zeros.union(test_ids_ones)
     
   def _create_feature_set(self):
     
@@ -207,7 +231,7 @@ class Train_Model():
     self.pipeline_model.write() \
                    .overwrite() \
                    .save('dbfs:/FileStore/models/feature_engineering')
-    print( f' [ Feature Engineering Pipeline saved as: {'dbfs:/FileStore/models/feature_engineering'} ]')
+    print( f" [ Feature Engineering Pipeline saved as: {'dbfs:/FileStore/models/feature_engineering'} ]")
     
     column_names = [tuple(self.feature_names)]
     column_names = spark.createDataFrame(column_names)
@@ -469,6 +493,13 @@ class Train_Model():
                          .save(self.model_path)
 
     predictions = self.champion_model.transform(self.all_data)
+
+    predictions.write \
+                                .format('delta') \
+                                .option('maxRecordsPerFile', 2000) \
+                                .option("overwriteSchema", "false") \
+                                .mode('overwrite') \
+                                .saveAsTable("avengers.default.predictions")
     
     if self.use_mlflow:
     
@@ -606,3 +637,62 @@ champion_model_performance_metrics_df
 # COMMAND ----------
 
 spark.sql(r"SELECT * FROM fmddt_catalog.gao.predictive_labels_monthly_model_metrics_V1").display()
+
+# COMMAND ----------
+
+spark.conf.set("spark.databricks.pyspark.enablePy4JSecurity", "false")
+
+# COMMAND ----------
+
+def feature_engineering(data: DataFrame, cat_features : list, num_features: list,count_vec_features : list ):
+#def feature_engineering(data: DataFrame, cat_features : list, num_features: list ):
+    """Contains scaler, feature vectorizer, one hot encoding. Creates a pipeline for reproducibility"""
+    column_names = []
+    stages = []
+    #Scaled Features
+    
+    features_to_scale = select_features_to_scale(df=data,continuous_cols=num_features, drop_cols=[''] )
+    print(f'>>> scaling: {features_to_scale}')
+
+    unscaled_assembler = VectorAssembler(inputCols=features_to_scale, outputCol='to_scale_vec')
+    scaler = StandardScaler(inputCol='to_scale_vec',outputCol='scaled_features')
+    stages += [unscaled_assembler, scaler]
+    
+    # Set Pipeline 
+    pipeline = Pipeline(stages= stages)
+    print('>>> fitting pipeline')
+    # Fit pipeline to Data
+    pipeline_model = pipeline.fit(data)
+    
+    # get column names
+    column_names = features_to_scale + unscaled_features + get_catagorical_names(pipeline_model)
+    
+    # transform data using fitted pipeline
+    df_transform = pipeline_model.transform(data)
+    return (pipeline_model, df_transform, column_names)
+df = spark.table("avengers.default.all_pilots_data")
+
+
+cat_features = ['gender','aircraft','aeromedical_class_current','dental_readiness','pha_status']
+count_vec = []
+num_features  = ["age","flight_hours_last_12mo","abnormal_labs_6mo","encounters_6mo","pha_overdue_flag","flight_hours_total","immunization_compliance"]
+
+pipeline_model, df_transform, column_names = feature_engineering(df, cat_features, num_features,count_vec) 
+
+# COMMAND ----------
+
+df = spark.table("avengers.default.all_pilots_data")
+
+# COMMAND ----------
+
+pipeline_model, df_transform, column_names = feature_engineering(df, cat_features, num_features,count_vec) 
+
+# COMMAND ----------
+
+df.display()
+
+# COMMAND ----------
+
+cat_features = ['aircraft','aeromedical_class_current','dental_readiness','pha_status']
+count_vec = ['gender']
+num_features  = ["age","flight_hours_last_12mo","abnormal_labs_6mo","encounters_6mo","pha_overdue_flag","flight_hours_total","immunization_compliance"]
